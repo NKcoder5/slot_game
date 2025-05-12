@@ -1208,62 +1208,31 @@
     }
 
     function generateResult(reelIndex) {
-        // For final results, we need to implement the logic for potential wins
-        // Based on spin count and requirements
-        
-        if (reelIndex === undefined) {
-            // If we're generating a full result (not for a specific reel)
-            const result = [];
-            for (let i = 0; i < 3; i++) {
-                // Fill with a random symbol for each position
-                result.push(getRandomSymbol());
-            }
-            return result;
-        } else {
-            // If we're generating a result for a specific reel
-            // Check if this is the last reel and we need to force a win
+        // Force jackpot every 10 spins
+        if (spinCount % 10 === 9) {
+            // On the last reel, make sure we match the first two reels
             if (reelIndex === 2) {
-                // Force a jackpot (all special symbols) after MAX_JACKPOT_SPINS
-                if (forceJackpot) {
-                    // Get the symbols from the first two reels to match the third
-                    const symbol1 = document.querySelector('#reel1 .symbol:nth-child(2)').textContent;
-                    const symbol2 = document.querySelector('#reel2 .symbol:nth-child(2)').textContent;
-                    
-                    // If first two reels have the same special symbol, match it for jackpot
-                    if (symbol1 === symbol2 && SPECIAL_SYMBOLS.includes(symbol1)) {
-                        return [getRandomSymbol(), symbol1, getRandomSymbol()];
-                    } 
-                    // Otherwise, force a special symbol jackpot
-                    else {
-                        const specialSymbol = SPECIAL_SYMBOLS[Math.floor(Math.random() * SPECIAL_SYMBOLS.length)];
-                        return [getRandomSymbol(), specialSymbol, getRandomSymbol()];
-                    }
-                } 
-                // Force a common win (all common symbols) after MAX_COMMON_WIN_SPINS
-                else if (forceCommonWin) {
-                    // Get the symbols from the first two reels to match the third
-                    const symbol1 = document.querySelector('#reel1 .symbol:nth-child(2)').textContent;
-                    const symbol2 = document.querySelector('#reel2 .symbol:nth-child(2)').textContent;
-                    
-                    // If first two reels have the same common symbol, match it for win
-                    if (symbol1 === symbol2 && COMMON_SYMBOLS.includes(symbol1)) {
-                        return [getRandomSymbol(), symbol1, getRandomSymbol()];
-                    } 
-                    // Otherwise, force a common symbol win
-                    else {
-                        const commonSymbol = COMMON_SYMBOLS[Math.floor(Math.random() * COMMON_SYMBOLS.length)];
-                        return [getRandomSymbol(), commonSymbol, getRandomSymbol()];
-                    }
-                }
+                const symbol1 = document.querySelector('#reel1 .symbol:nth-child(2)').textContent;
+                const symbol2 = document.querySelector('#reel2 .symbol:nth-child(2)').textContent;
+                return [symbol1, symbol1, symbol1];
             }
-            
-            // Regular result for a specific reel
-            const result = [];
-            for (let i = 0; i < 3; i++) {
-                result.push(getRandomSymbol());
+            // For first two reels, use the same symbol
+            else if (reelIndex === 0) {
+                const symbol = getRandomSymbol();
+                return [symbol, symbol, symbol];
             }
-            return result;
+            else if (reelIndex === 1) {
+                const symbol = document.querySelector('#reel1 .symbol:nth-child(2)').textContent;
+                return [symbol, symbol, symbol];
+            }
         }
+        
+        // Regular random result for other spins
+        const result = [];
+        for (let i = 0; i < 3; i++) {
+            result.push(getRandomSymbol());
+        }
+        return result;
     }
 
     function allReelsStopped() {
@@ -1272,13 +1241,6 @@
         stopBtn.disabled = true;
         
         spinCount++;
-        
-        // Check if we need to force a win based on spin count
-        if (spinCount >= MAX_JACKPOT_SPINS) {
-            forceJackpot = true;
-        } else if (spinCount >= MAX_COMMON_WIN_SPINS) {
-            forceCommonWin = true;
-        }
         
         // Get the middle symbol from each reel
         const middleSymbols = [
@@ -1301,27 +1263,14 @@
         if (symbols[0] === symbols[1] && symbols[1] === symbols[2]) {
             const matchingSymbol = symbols[0];
             
-            // Check if it's a special symbol (jackpot win)
-            if (SPECIAL_SYMBOLS.includes(matchingSymbol)) {
-                // Reset spin count after win
-                spinCount = 0;
-                forceJackpot = false;
-                forceCommonWin = false;
-                
-                // Award jackpot
-                showJackpotWin();
-            } 
-            // Common symbol match
-            else if (COMMON_SYMBOLS.includes(matchingSymbol)) {
-                // Reset spin count after win
-                spinCount = 0;
-                forceJackpot = false;
-                forceCommonWin = false;
-                
-                // Award common win
-                updateBalance(balance + COMMON_WIN_AMOUNT);
-                showWin(COMMON_WIN_AMOUNT);
-            }
+            // Award jackpot for any matching symbols
+            // Reset spin count after win
+            spinCount = 0;
+            forceJackpot = false;
+            forceCommonWin = false;
+            
+            // Award jackpot
+            showJackpotWin();
             
             // Flash win line
             winLineFlash.classList.add('flash');
